@@ -14,7 +14,7 @@ argparse
 
 ## command line
 ```
-python -i input_feature_table -o outputfolder -v True/False 
+python OptimalSubspace.py -i input_feature_table -o outputfolder -v True/False 
 ```
 i: csv format table. 
    row: data points
