@@ -1,6 +1,9 @@
 # ManifoldAnalysis
 
 This python package is used to find the optimal feature subspace. Currently it has been applied in analysis of single neuron morphologies and neuron type classification.
+  
+OptimalSubspace.py: algorithm to find the optimal feature subspace  
+KANNDBSCAN.py: an adaptive parameter dbscan algorithm  
 
 ## pre-request python packages
 os
@@ -14,7 +17,7 @@ argparse
 
 ## command line
 ```
-python OptimalSubspace.py -i input_feature_table -o outputfolder -v True/False 
+python main.py -i input_feature_table -o outputfolder -v True/False 
 ```
 i: csv format table. 
    row: data points
@@ -31,3 +34,6 @@ v: visualization of all figures involved in feature screening process. If False,
 3. OptimalSubspaceResult.jpg: 3D plot of the final optimal feature subspace
 4. scoreplot.png: score changes vs. dimension
 5. clusteringlabel.txt: clustering label result for each data point
+
+## Notice
+1. The number of parallel threads can be modified in "KANNDBSCAN.py", please adjust it according to the machine used

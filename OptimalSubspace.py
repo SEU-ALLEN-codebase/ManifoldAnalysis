@@ -1,32 +1,15 @@
-#!/usr/bin/python3
-"""
-OptimalSubspace: algorithm to find the optimal feature subspace 
-Created on Aug 27th, 2022
-Last revision: Dec 13th, 2022
-
-@author: Penghao Qian, Sujun Zhao
-"""
-
-print(__doc__)
-
-import os,copy
+import os
 import numpy as np
 from sklearn.cluster import DBSCAN
-from scipy.spatial.distance import pdist,cdist,squareform
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn import metrics, preprocessing
-from multiprocessing import Pool
-import argparse
+from scipy.spatial.distance import cdist,pdist,squareform
+
+import KANNDBSCAN as KD
 
 
 color_dict={0:'#FF0000',2:'#00FF00',1:'#0000FF',3:'#FFFF00',4:'#00FFFF',5:'#FF00FF',-1:'#000000'}
-
-
-def distanceMatrix(data):
-    D=pdist(data,metric='euclidean')
-    DistM=squareform(D)
-    return DistM
 
 
 ##### PCA transformation
@@ -42,70 +25,12 @@ def my_PCA(data):
     return newX, data_components  
 
 
-def computeEpsCandidate(data):
-    """
-    Calculate Eps candidate values
-    return: Eps candidate set
-    """
-    DistMatrix = distanceMatrix(data)
-    tmp_matrix = copy.deepcopy(DistMatrix)
-    for i in range(len(tmp_matrix)):
-        tmp_matrix[i].sort()
-    EpsCandidate = []
-    for k in range(1,len(data)):
-        Dk = tmp_matrix[:,k]
-        DkAverage = np.mean(Dk)
-        EpsCandidate.append(DkAverage)
-    return EpsCandidate
-
-
-def computeMinptsCandidate(data,DistMatrix,EpsCandidate):
-    """
-    Calculate MinPts candidate values
-    """
-    MinptsCandidate = []
-    for k in range(len(EpsCandidate)):
-        tmp_eps = EpsCandidate[k]
-        tmp_count = np.count_nonzero(DistMatrix<=tmp_eps)
-        MinptsCandidate.append(tmp_count/len(data))
-    return MinptsCandidate
-
-
-def mutiGetDBSCAN(par):
-    """
-    Try DBSCAN clustering
-    """
-    eps,min_samples,num,data=par[0],par[1],par[2],par[3]
-    clustering = DBSCAN(eps=eps,min_samples=min_samples).fit(data)
-    num_clustering = max(clustering.labels_)
-    return [num, num_clustering]
-
-def clusterNumber(data,EpsCandidate,MinPtsCandidate):
-    """
-    Compute cluster number list with different pairs of parameters
-    """
-    np_data=np.array(data)
-    par_list=[]
-    ClusterNumberList=[]
-    for i in range(len(EpsCandidate)):
-        par_list.append([EpsCandidate[i],MinPtsCandidate[i],i,np_data])
-    cpu_worker_num = 18
-    with Pool(cpu_worker_num) as p:
-        num_clustering_result=p.map(mutiGetDBSCAN, par_list)
-    num_clustering_result=np.array(num_clustering_result)    
-    
-    for i in range(len(EpsCandidate)):
-        clustering_result=num_clustering_result[num_clustering_result[:,0]==i,1][0]
-        ClusterNumberList.append(clustering_result)
-    return ClusterNumberList
-
-
 ##### get best combination of eps and minpts
 def optimalDBSCANParameter(data):
-    EpsCandidate=computeEpsCandidate(data)
-    DistMatrix=distanceMatrix(data)
-    MinPtsCandidate=computeMinptsCandidate(data,DistMatrix,EpsCandidate)
-    ClusterNumberList=clusterNumber(data,EpsCandidate,MinPtsCandidate)
+    EpsCandidate=KD.computeEpsCandidate(data)
+    DistMatrix=KD.distanceMatrix(data)
+    MinPtsCandidate=KD.computeMinptsCandidate(data,DistMatrix,EpsCandidate)
+    ClusterNumberList=KD.clusterNumber(data,EpsCandidate,MinPtsCandidate)
     for i in range(len(ClusterNumberList)-3):
         if ClusterNumberList[i]==ClusterNumberList[i+1] and ClusterNumberList[i+1]==ClusterNumberList[i+2]:
             if ClusterNumberList[i]!=0:
@@ -339,23 +264,5 @@ def bestSubspace(data,outputFolder=None):
 
     return label,num_outlier,num_class,finalScore,S,DB,CH
 
-if __name__ == '__main__':
-    parser=argparse.ArgumentParser()
-    parser.add_argument('--i',help='feature table',type=str)
-    parser.add_argument('--o',help='output folder. if none, it will be current folder',type=str)
-    parser.add_argument('--v',help='whether need to visualize all figures in the screening process',type=str)
 
-    args=parser.parse_args()
-    feature_table=np.loadtxt(args.i,delimiter=',',skiprows=1)
-
-    FeatureScreen(feature_table,args.o,visualization=args.v)
-    label,num_outlier,num_class,finalScore,S,DB,CH = bestSubspace(feature_table,args.o)
-
-    if args.o == None:
-        outtext=os.path.join(os.getcwd(),"clusteringlabel.txt")
-    else:
-        outtext=os.path.join(args.o,"clusteringlabel.txt")
-    ids=np.arange(len(label))
-    result=np.hstack((np.array(label),ids))
-    np.savetxt(outtext,result,fmt='%d')
     
