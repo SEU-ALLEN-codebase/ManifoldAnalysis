@@ -1,4 +1,6 @@
 # ManifoldAnalysis
+This is the code for the paper "Cell Typing and Sub-typing Based on Detecting Characteristic Subspaces of Morphological Features Derived from Neuron Images" under consideration  
+Preprint: https://www.biorxiv.org/content/10.1101/2023.09.26.559442  
 
 This python package is used to find the optimal feature subspace. Currently it has been applied in analysis of single neuron morphologies and neuron type classification.
   
